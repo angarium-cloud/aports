@@ -14,9 +14,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: ivanvc/abuild-releaser-action@v1.1.0
+      - uses: angarium-cloud/abuild-releaser-action@v1.2.0
         with:
           author: Angarium Alpine <alpine@angarium.co.uk>
           rsa_public_key: ${{ secrets.RSA_PUBLIC_KEY }}
           rsa_private_key: ${{ secrets.RSA_PRIVATE_KEY }}
           package_dirs: testing/*
+          extra_repositories: |-
+            https://dl-cdn.alpinelinux.org/alpine/edge/community
+            https://dl-cdn.alpinelinux.org/alpine/edge/testing
