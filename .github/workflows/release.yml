@@ -13,7 +13,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: angarium-cloud/abuild-releaser-action@v1.2.0
         with:
           author: Angarium Alpine <alpine@angarium.co.uk>
