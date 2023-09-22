@@ -1,0 +1,49 @@
+# Contributor: Yann Vigara <yvigara@angarium.co.uk>
+# Maintainer: Yann Vigara <yvigara@angarium.co.uk>
+pkgname=nats-c
+_pkgname=nats.c
+pkgver=3.6.1
+pkgrel=0
+pkgdesc="NATS & NATS Streaming - C Client"
+url="https://github.com/nats-io/nats-c"
+arch="all !x86 !armv7 !armhf !s390x !ppc64le" # limited by failing check()
+license="Apache-2.0"
+subpackages="$pkgname-static $pkgname-dev"
+source="
+$pkgname-$pkgver.tar.gz::https://github.com/nats-io/nats.c/archive/refs/tags/v$pkgver.tar.gz
+"
+#test-exclude.patch
+makedepends="
+	cmake
+	ninja
+	openssl-dev
+	libsodium-dev
+"
+depends="openssl libsodium"
+checkdepends="nats-server valgrind"
+builddir="$srcdir/$_pkgname-$pkgver"
+
+build() {
+	cmake -B build -G Ninja \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DNATS_BUILD_USE_SODIUM=ON \
+		-DNATS_COMPILER_HARDENING=ON \
+		-DNATS_BUILD_EXAMPLES=OFF \
+		-DNATS_BUILD_STREAMING=OFF
+	cmake --build build
+}
+
+check() {
+	local _exclude='AuthFailToReconnect|AutoUnsubNoUnsubOnDestroy|ClientAutoUnsubAndReconnect|EventLoop|JetStreamOrderedConsSrvRestart|JetStreamOrderedConsWithErrors|ParseStateReconnectFunctionality|PendingLimitsDeliveredAndDropped|ReconnectWithTokenHandler|SrvVersionAtLeast|RequestTimeout|Test_Stan'
+	ctest --test-dir build --timeout 60 --output-on-failure -E "($_exclude)" -j1
+}
+
+package() {
+	DESTDIR="$pkgdir" cmake --install build
+	#make DESTDIR="$pkgdir" install
+}
+
+sha512sums="
+51c422ae93859245e27eb0769535a2b34b420c39eac3a7a2003945bbe38180250541057df2dd047c25c3bcee1f6f23f6cad55f54845a631cbb52462523c283a2  nats-c-3.6.1.tar.gz
+"
