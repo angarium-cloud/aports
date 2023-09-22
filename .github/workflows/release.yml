@@ -20,6 +20,7 @@ jobs:
           rsa_public_key: ${{ secrets.RSA_PUBLIC_KEY }}
           rsa_private_key: ${{ secrets.RSA_PRIVATE_KEY }}
           package_dirs: testing/*
+          generate_single_index_page: false
           extra_repositories: |-
             https://dl-cdn.alpinelinux.org/alpine/edge/community
             https://dl-cdn.alpinelinux.org/alpine/edge/testing
