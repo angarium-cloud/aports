@@ -1,0 +1,72 @@
+# Contributor: Yann Vigara <yvigara@angarium.co.uk>
+# Maintainer: Leonardo Arena <rnalrd@alpinelinux.org>
+pkgname=rtpengine
+pkgver=11.5.1.2
+pkgrel=0
+pkgdesc="Proxy for RTP traffic and other UDP based media traffic"
+url="https://github.com/sipwise/rtpengine"
+arch="all"
+license="GPL-3.0-only"
+
+makedepends=" bash curl-dev ffmpeg-dev gperf glib-dev hiredis-dev iptables-dev json-glib-dev libevent-dev libopusenc-dev libpcap-dev libwebsockets-dev mariadb-dev openssl-dev>3 pandoc-cli pcre-dev perl spandsp-dev xmlrpc-c-dev zlib-dev "
+# checkdepends="perl-bencode perl-net-interface perl-socket6"
+install="$pkgname.pre-install"
+subpackages="$pkgname-doc $pkgname-openrc $pkgname-recording"
+pkgusers="rtpengine"
+pkggroups="rtpengine"
+source="$pkgname-$pkgver.tar.gz::https://github.com/sipwise/rtpengine/archive/mr$pkgver.tar.gz
+	$pkgname.initd
+
+	fix-default-config.patch
+	fix-ifunc.patch
+	"
+builddir="$srcdir"/$pkgname-mr$pkgver
+
+build() {
+  RTPENGINE_VERSION="mr$pkgver"  CFLAGS="-O2 -g3" make
+}
+
+# TODO: There's a real test suite available,
+# but some needed packages are missing
+check() {
+	./daemon/rtpengine --version
+	# make check
+}
+
+package() {
+	install -Dm644 LICENSE "$pkgdir"/usr/share/doc/$pkgname/LICENSE
+
+	install -Dm755 daemon/rtpengine "$pkgdir"/usr/bin/rtpengine
+	install -Dm644 etc/$pkgname.conf "$pkgdir"/etc/rtpengine/rtpengine.conf
+	install -Dm755 "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
+	ln -s rtpengine "$pkgdir"/etc/init.d/$pkgname-recording
+
+	install -d "$pkgdir"/usr/share/man/man1
+	gzip -c daemon/rtpengine.8 > "$pkgdir"/usr/share/man/man1/rtpengine.1.gz
+	gzip -c recording-daemon/rtpengine-recording.8 \
+		> "$pkgdir"/usr/share/man/man1/rtpengine-recording.1.gz
+
+	install -Dm755 iptables-extension/libxt_RTPENGINE.so \
+		"$pkgdir"/usr/lib/xtables/libxt_RTPENGINE.so
+}
+
+recording() {
+	depends="$pkgname"
+
+	install -Dm755 "$builddir"/recording-daemon/rtpengine-recording \
+		"$subpkgdir"/usr/bin/rtpengine-recording
+	install -Dm644 "$builddir"/etc/rtpengine-recording.conf \
+		"$subpkgdir"/etc/$pkgname/rtpengine-recording.conf
+
+	local dir
+	for dir in lib spool; do
+		install -d -o rtpengine -g rtpengine "$subpkgdir"/var/$dir/$pkgname
+	done
+}
+
+sha512sums="
+a808f4c6113b39e87b73ea34483b1dabf4400e0daeec2351622f9263c352c4fc1aa66dad9e8c449e657eef013e7c8c7c689126423f6c17442c0cbd92f226eefa  rtpengine-11.5.1.2.tar.gz
+a696277b8ef477420db13e4628818b728f318a8ba52f727ce8b7969f5f0182f9389f3b931eb4542ce1fe1a6fbc4dcdc3d6959090de76b1981f434b3fafebc224  rtpengine.initd
+73a93ccc287982092691e97eb743600332d842ba7d87336dcee20604bb638b9b349333072249a616f01b47dded38452263769252eca7172f954591e6306fd9d6  fix-default-config.patch
+c50e1ea28bd5f50b85b162bcf6b7e845ead525c267c9250a8b0b61203fbcc0f1e183fa4fe701b324d7a43d2680c8d2690885b53f156ec8400d71132e1ed9c2a9  fix-ifunc.patch
+"
