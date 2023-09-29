@@ -5,7 +5,7 @@
 # Maintainer: Nathan Angelacos <nangel@alpinelinux.org>
 
 pkgname=kamailio
-pkgver=5.7.1
+pkgver=5.7.2
 pkgrel=0
 
 # If building from a git snapshot, specify the gitcommit
@@ -25,13 +25,13 @@ arch="all"
 license="GPL-2.0-or-later"
 options="!check" # no testsuite
 depends="gawk"
-makedepends="bison flex freeradius-client-dev expat-dev
+makedepends="bison db-dev flex freeradius-client-dev expat-dev
 	lksctp-tools-dev perl-dev libpq-dev python3-dev
 	pcre-dev mariadb-dev libxml2-dev curl-dev unixodbc-dev
-	confuse-dev ncurses-dev sqlite-dev lua-dev openldap-dev openssl-dev>3
+	confuse-dev ncurses-dev sqlite-dev lua-dev openldap-dev openssl-dev
 	net-snmp-dev libuuid libev-dev jansson-dev json-c-dev libevent-dev
 	linux-headers libmemcached-dev rabbitmq-c-dev hiredis-dev
-	ruby-dev libmaxminddb-dev libunistring-dev mosquitto-dev libmnl-dev"
+	ruby-dev libmaxminddb-dev libunistring-dev mongo-c-driver-dev mosquitto-dev libmnl-dev libwebsockets-dev"
 	# These are in testing  / community - can't enable for kamailio in main
 	# librdkafka-dev dnssec-tools-dev
 source="kamailio-${pkgver}$_suffix.tar.gz::https://github.com/kamailio/kamailio/archive/$_gitcommit.tar.gz
@@ -49,7 +49,7 @@ install="$pkgname.pre-install $pkgname.pre-upgrade"
 #
 # Alpine specific changes:
 #
-# _mod_list_debugger is not defined in the orginal
+# _mod_list_debugger is not defined in the original
 #
 # Move avp from _mod_list_extras to _mod_list_basic, so that we can create
 # a kamailio-extras package
@@ -72,7 +72,7 @@ _mod_list_extras="auth_diameter call_control cnxcc dmq domainpolicy log_custom \
 		auth_xkeys cfgt"
 
 # - common modules depending on database
-_mod_list_db="acc alias_db auth_db avpops cfg_db db_flatstore \
+_mod_list_db="acc alias_db auth_db avpops cfg_db db_berkeley db_flatstore \
 		db_cluster dialog dispatcher domain drouting group \
 		htable imc matrix mohqueue msilo mtree p_usrloc pdt permissions \
 		pipelimit prefix_route registrar sipcapture siptrace speeddial \
@@ -83,7 +83,7 @@ _mod_list_dbuid="db2_ops uid_auth_db uid_avp_db uid_domain uid_gflags \
 		uid_uri_db"
 
 # - modules for devel purposes
-_mod_list_devel="print print_lib"
+_mod_list_devel="misctest print print_lib"
 
 # - modules depending on pcre3 library
 _mod_list_pcre="dialplan lcr regex"
@@ -121,11 +121,17 @@ _mod_list_xmpp="xmpp"
 # - modules depending on confuse library
 _mod_list_carrierroute="carrierroute"
 
+# - modules depending on bdb (db4) library
+_mod_list_berkeley="db_berkeley"
+
 # - modules depending on curl library
 _mod_list_utils="utils http_client"
 
 # - async http_async_client
 _mod_list_http_async="http_async_client"
+
+# - modules depending on purple library
+_mod_list_purple="purple"
 
 # - modules depending on memcache library
 _mod_list_memcached="memcached"
@@ -137,9 +143,9 @@ _mod_list_tls="auth_identity crypto tls"
 _mod_list_outbound="outbound"
 
 # - modules depending on unistring library
-_mod_list_websocket="websocket"
+_mod_list_websocket="websocket lwsc"
 
-# - modules depending on dnssec-tools-dev
+# - modules depending on libval-threads libcrypto libsres libpthread
 _mod_list_dnssec="dnssec"
 
 # - modules depending on libsctp
@@ -162,7 +168,7 @@ _mod_list_lua="app_lua app_lua_sr"
 # - modules depending on perl library
 _mod_list_perl="app_perl db_perlvdb"
 
-# - modules depending on python3 libarary
+# - modules depending on python3 library
 _mod_list_python3="app_python3"
 
 # - modules depending on ruby library
@@ -187,7 +193,7 @@ _mod_list_sqlite="db_sqlite"
 _mod_list_oracle="db_oracle"
 
 # - modules depending on json library
-_mod_list_json="json pua_json jsonrpcc jsonrpcs"
+_mod_list_json="json jsonrpcc jsonrpcs pua_json"
 
 # - modules depending on redis library
 _mod_list_redis="db_redis ndb_redis topos_redis"
@@ -223,7 +229,7 @@ _mod_list_kazoo="kazoo"
 _mod_list_mongodb="db_mongodb ndb_mongodb"
 
 # - modules depending on jansson library
-_mod_list_jansson="jansson janssonrpcc acc_json"
+_mod_list_jansson="acc_json jansson janssonrpcc"
 
 # - modules depending on libm
 _mod_list_jsdt="app_jsdt"
@@ -272,7 +278,7 @@ prepare() {
 	cd utils/kamctl/
 	sed -i -e 's:/var/run/kamailio.pid:/var/run/kamailio/kamailio.pid:g' \
 		kamctl.base kamctlrc
-	# we actually dont need bash
+	# we actually don't need bash
 	sed -i -e 's:/bin/bash:/bin/sh:' kamctl kamdbctl
 }
 
@@ -292,7 +298,7 @@ build() {
 }
 
 package() {
-	make FREERADIUS=1 install
+	make FREERADIUS=1 -j1 install
 
 	install -m755 -D "$srcdir"/$pkgname.initd "$pkgdir"/etc/init.d/$pkgname
 	install -d -o kamailio "$pkgdir"/var/run/kamailio
@@ -395,7 +401,7 @@ ldap() {
 }
 
 utils() {
-	_generic_pkg "miscelaneous utility functions" \
+	_generic_pkg "miscellaneous utility functions" \
 		"$_mod_list_utils"
 }
 
@@ -472,6 +478,11 @@ uuid() {
 memcached() {
 	_generic_pkg "memcached support" \
 		"$_mod_list_memcached"
+}
+
+mongodb() {
+	_generic_pkg "MongoDB database connectivity" \
+	"$_mod_list_mongodb"
 }
 
 rabbitmq() {
