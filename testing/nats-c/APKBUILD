@@ -2,7 +2,7 @@
 # Maintainer: Yann Vigara <yvigara@angarium.co.uk>
 pkgname=nats-c
 _pkgname=nats.c
-pkgver=3.6.1
+pkgver=3.7.0
 pkgrel=0
 pkgdesc="NATS & NATS Streaming - C Client"
 url="https://github.com/nats-io/nats-c"
@@ -45,5 +45,5 @@ package() {
 }
 
 sha512sums="
-51c422ae93859245e27eb0769535a2b34b420c39eac3a7a2003945bbe38180250541057df2dd047c25c3bcee1f6f23f6cad55f54845a631cbb52462523c283a2  nats-c-3.6.1.tar.gz
+0670a2b7fb70a49e2b1f5cbccf2406a3ecaf04b48b4147dc2ead9cb106f1673efa79b5e40d3bb557986ade35da2158b58b324603f98a58258a497dc57cb5d700  nats-c-3.7.0.tar.gz
 "
