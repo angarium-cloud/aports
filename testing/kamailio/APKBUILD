@@ -6,7 +6,7 @@
 
 pkgname=kamailio
 pkgver=5.7.2
-pkgrel=0
+pkgrel=1
 
 # If building from a git snapshot, specify the gitcommit
 # If building a proper release, leave gitcommit blank or commented
@@ -31,7 +31,8 @@ makedepends="bison db-dev flex freeradius-client-dev expat-dev
 	confuse-dev ncurses-dev sqlite-dev lua-dev openldap-dev openssl-dev
 	net-snmp-dev libuuid libev-dev jansson-dev json-c-dev libevent-dev
 	linux-headers libmemcached-dev rabbitmq-c-dev hiredis-dev
-	ruby-dev libmaxminddb-dev libunistring-dev mongo-c-driver-dev mosquitto-dev libmnl-dev libwebsockets-dev"
+	ruby-dev libmaxminddb-dev libunistring-dev mongo-c-driver-dev mosquitto-dev
+	libmnl-dev libwebsockets-dev openssl-libs-static zlib-static"
 	# These are in testing  / community - can't enable for kamailio in main
 	# librdkafka-dev dnssec-tools-dev
 source="kamailio-${pkgver}$_suffix.tar.gz::https://github.com/kamailio/kamailio/archive/$_gitcommit.tar.gz
@@ -69,14 +70,15 @@ _mod_list_basic="avp async auth benchmark blst cfg_rpc cfgt cfgutils corex count
 _mod_list_extras="auth_diameter call_control cnxcc dmq domainpolicy log_custom \
 		msrp pdb qos sca seas sms sst timer tmrec tsilo uac_redirect \
 		xhttp xhttp_rpc xprint nosip dmq_usrloc statsd rtjson tcpops \
-		auth_xkeys cfgt"
+		auth_xkeys cfgt call_obj keepalive ss7ops acc_diameter evrexec \
+		sipjson lrkproxy math posops xhttp_prom"
 
 # - common modules depending on database
 _mod_list_db="acc alias_db auth_db avpops cfg_db db_berkeley db_flatstore \
 		db_cluster dialog dispatcher domain drouting group \
 		htable imc matrix mohqueue msilo mtree p_usrloc pdt permissions \
 		pipelimit prefix_route registrar sipcapture siptrace speeddial \
-		sqlops uac uri_db userblocklist usrloc"
+		sqlops uac uri_db userblocklist usrloc secfilter"
 
 # - common modules depending on database, using UID db schema
 _mod_list_dbuid="db2_ops uid_auth_db uid_avp_db uid_domain uid_gflags \
@@ -125,7 +127,7 @@ _mod_list_carrierroute="carrierroute"
 _mod_list_berkeley="db_berkeley"
 
 # - modules depending on curl library
-_mod_list_utils="utils http_client"
+_mod_list_utils="utils http_client lost slack"
 
 # - async http_async_client
 _mod_list_http_async="http_async_client"
@@ -138,6 +140,9 @@ _mod_list_memcached="memcached"
 
 # - modules depending on openssl library
 _mod_list_tls="auth_identity crypto tls"
+
+# - modules depending on static openssl library
+mod_list_tlsa=tlsa
 
 # - modules depending on openssl library
 _mod_list_outbound="outbound"
@@ -169,7 +174,7 @@ _mod_list_lua="app_lua app_lua_sr"
 _mod_list_perl="app_perl db_perlvdb"
 
 # - modules depending on python3 library
-_mod_list_python3="app_python3"
+_mod_list_python3="app_python3 app_python3s"
 
 # - modules depending on ruby library
 _mod_list_ruby="app_ruby"
@@ -255,7 +260,7 @@ subpackages="$pkgname-doc $pkgname-dbg $pkgname-openrc"
 _modules="$_module_group_kstandard"
 for _i in db postgres sqlite dbtext mysql \
 	cpl xml unixodbc snmpstats xmpp carrierroute \
-	ldap utils tls presence lua ims outbound debugger \
+	ldap utils tls tlsa presence lua ims outbound debugger \
 	extras json websocket authephemeral \
 	uuid ev memcached redis geoip2 jansson sqlang sipdump \
 	jsdt http_async kazoo rabbitmq sctp radius perl \
@@ -408,6 +413,11 @@ utils() {
 tls() {
 	_generic_pkg "TLS support" \
 		"$_mod_list_tls"
+}
+
+tlsa() {
+	_generic_pkg "TLS support compiled statically against libssl and libcrypto" \
+		"$_mod_list_tlsa"
 }
 
 presence() {
